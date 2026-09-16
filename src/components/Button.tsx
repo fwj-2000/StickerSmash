@@ -1,13 +1,15 @@
 import { StyleSheet, View, Pressable, Text } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 type Props = {
+  /** 按钮上显示的文字 */
   label: string;
+  /** 传 "primary" 时使用带图标的黄色边框样式 */
   theme?: "primary";
+  /** 点击按钮时触发 */
+  onPress?: () => void;
 };
 
-export default function Button({ label, theme }: Props) {
-  const onPress = () => alert("You pressed a button.");
-  
+export default function Button({ label, theme, onPress }: Props) {
   if (theme === "primary") {
     return (
       <View style={[styles.buttonContainer, { borderWidth: 4, borderColor: "#ffd33d", borderRadius: 18 }]}>
@@ -20,7 +22,7 @@ export default function Button({ label, theme }: Props) {
   }
   return (
     <View style={styles.buttonContainer}>
-      <Pressable style={styles.button} onPress={onPress}>
+      <Pressable style={styles.button} onPress={() => alert("You pressed a button.")}>
         <Text style={styles.buttonLabel}>{label}</Text>
       </Pressable>
     </View>
