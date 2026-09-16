@@ -1,7 +1,10 @@
-import { ImageSourcePropType, View, StyleSheet } from "react-native";
+import { Alert, ImageSourcePropType, Linking, View, StyleSheet } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { captureRef } from "react-native-view-shot";
+// import * as MediaLibrary from "expo-media-library/legacy";
+import { Asset, requestPermissionsAsync } from "expo-media-library";
 
 import Button from "@/components/Button";
 import ImageViewer from "@/components/ImageViewer";
@@ -19,6 +22,21 @@ export default function Index() {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [pickedEmoji, setPickedEmoji] = useState<ImageSourcePropType | undefined>(undefined);
 
+  const imageRef = useRef<View>(null);
+  // 访问设备敏感信息权限
+  // const [permissionResponse, requestPermission] = ImagePicker.useMediaLibraryPermissions();
+  // useEffect(() => {
+  //   // 没权限去后续授权
+  //   if (!permissionResponse?.granted) {
+  //     requestPermission();
+  //   }
+  // }, []);
+  // useEffect(() => {
+  //   // 没权限去后续授权
+  //   if (!permissionResponse?.granted) {
+  //     requestPermission();
+  //   }
+  // }, []);
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -46,15 +64,44 @@ export default function Index() {
   };
 
   const onSaveImageAsync = async () => {
-    // we will implement this later
+    try {
+      const permission = await requestPermissionsAsync();
+      console.log("媒体库权限：", permission);
+      if (permission.status !== "granted") {
+        Alert.alert("保存需要媒体库权限", "请在系统设置中开启。", [
+          { text: "取消", style: "cancel" },
+          {
+            text: "确定",
+            style: "default",
+            onPress: () => {
+              void Linking.openSettings();
+            },
+          },
+        ]);
+
+        return;
+      }
+
+      const localUri = await captureRef(imageRef, {
+        height: 440,
+        quality: 1,
+      });
+
+      await Asset.create(localUri);
+      alert("Saved!");
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   return (
     <GestureHandlerRootView style={styles.container}>
       {/* Image Viewer */}
       <View style={styles.imageContainer}>
-        <ImageViewer imgSource={PlaceholderImage} selectedImage={selectedImage} />
-        {pickedEmoji && <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />}
+        <View ref={imageRef} collapsable={false}>
+          <ImageViewer imgSource={PlaceholderImage} selectedImage={selectedImage} />
+          {pickedEmoji && <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />}
+        </View>
       </View>
 
       {/* Options Container 两组不同的按钮 */}
